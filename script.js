@@ -101,6 +101,71 @@ function performOperation() {
 
 }
 
+function calculate() {
+    // Checks if user inputs only a point
+    if (currentInput === ".") {
+        setError("Error: Invald value");
+        return;
+    }
+
+    // Prevent calculating without second number
+    if (currentInput === null) {
+        return null;
+    }
+
+
+    // Calculates based on symbol saved
+    performOperation();
+
+    // Prevents operation if there is an error
+    if (isLocked) {
+        return;
+    }
+
+    // Saves current result
+    if (previousValue === null) {
+        result = currentInput;
+    }
+    else {
+        result = String(previousValue);
+    }
+    
+    // Checks if equality was clicked before any values
+    if (operator === null && currentInput === null) {
+        return;
+    }
+
+
+    // Evaluates to get result
+
+    // Prevents operation if there is an error
+    if (isLocked) {
+        return;
+    }
+
+    // Mantains current state if there is no new input
+    if (result === null) {
+        return;
+    }
+
+    displayString = result;
+    displayValue(displayString);
+
+    // Check if operation is finished
+    const noPendingOperation = operatorPresent || previousValue !== null || operator !== null;
+    // Manual state reset on specifics
+    previousValue = null;
+    currentInput = displayString;
+    operator = null;
+    operatorPresent = false;
+    originalZero = false;
+
+    if (noPendingOperation) {
+        // Lets the calculator restart after new input
+        resultReady = true;
+    }
+}
+
 // Evaluates one value at a time
 function evalCurrentValue(value) {
     // Checks if there is already a symbol, and if the current value is a symbol
@@ -157,42 +222,6 @@ function evalCurrentValue(value) {
         return;
     }
 
-    // Checks if equal button is clicked
-    if (value === "=") {
-        // Checks if user inputs only a point
-        if (currentInput === ".") {
-            setError("Error: Invald value");
-            return;
-        }
-
-        // Prevent calculating without second number
-        if (currentInput === null) {
-            return null;
-        }
-
-
-        // Calculates based on symbol saved
-        performOperation();
-
-        // Prevents operation if there is an error
-        if (isLocked) {
-            return;
-        }
-
-
-        // Saves and returns current result
-        if (previousValue === null) {
-            result = currentInput;
-        }
-        else {
-            result = String(previousValue);
-        }
-       
-
-        return result;
-    }
-
-
     // Saves the value if not a symbol operator
     else {
         if (value === "." && currentInput !== null && currentInput.includes(".")) {
@@ -210,17 +239,13 @@ function evalCurrentValue(value) {
 
 
 // Gets the value depending on button clicked
-function getValue(event) {
-    // Gets the data from buttons
-    const clickedButton = event.target;
-    const buttonText = clickedButton.textContent;
+function getValue(buttonText) {
 
     // Locks pad while error is displayed, except for CLEAR
     if (isLocked && buttonText !== "CLEAR") {
     return;
     }
 
-   
     // Resets state and display
     if (buttonText === "CLEAR") {
         resetState()
@@ -254,44 +279,6 @@ function getValue(event) {
         evalCurrentValue(buttonText);
     }
 
-    else if (buttonText === "=") {
-
-        // Checks if equality was clicked before any values
-        if (operator === null && currentInput === null) {
-            return;
-        }
-
-        // Evalueates to get result
-        const value = evalCurrentValue(buttonText);
-
-        // Prevents operation if there is an error
-        if (isLocked) {
-            return;
-        }
-        // Mantains current state if there is no new input
-        if (value === null) {
-            return;
-        }
-
-        displayString = value;
-        displayValue(displayString);
-
-        // Check if operation is finsihed
-        const noPendingOperation = operatorPresent || previousValue !== null || operator !== null;
-        // Manual state reset on specifics
-        previousValue = null;
-        currentInput = displayString;
-        operator = null;
-        operatorPresent = false;
-        originalZero = false;
-
-        if (noPendingOperation) {
-            // Lets the calculator restart after new input
-            resultReady = true;
-        }
-
-       
-    }
 
     // If user decides to click a number, calculation restarts
     // (also in charge of "0" place holder)
@@ -317,11 +304,22 @@ function getValue(event) {
     }
 }
 
+function handleInput(event) {
+    // Gets the data from buttons
+    const clickedButton = event.target;
+    const buttonText = clickedButton.textContent;
 
+    if (buttonText === "=") {
+        calculate();
+    }
+    else {
+        getValue(buttonText);
+    }
+}
 // ==========================
 // Main: Checks for clicks
 // ==========================
 
 buttons.forEach((button) => {
-    button.addEventListener("click", getValue)
+    button.addEventListener("click", handleInput)
 });
